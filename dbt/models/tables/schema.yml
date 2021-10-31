@@ -1,0 +1,19 @@
+
+version: 2
+
+models:
+  - name: github_first_contributors
+    description: "Number contributors per repository by month"
+    columns:
+      - name: repo_name
+        description: ""
+        tests:
+          - not_null
+      - name: month
+        description: ""
+        tests:
+          - not_null
+      - name: number_of_new_contributors
+        description: ""
+        tests:
+          - not_null

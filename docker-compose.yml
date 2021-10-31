@@ -1,13 +1,49 @@
 version: '3.8'
 services:
+    tests_api:
+        build:
+            context: ./api
+        depends_on:
+            - postgres
+        command: pytest
+        env_file:
+            - .env
+
+    tests_dags:
+        build:
+            context: ./dags
+        command: pytest
+        env_file:
+            - .env
+
+    api:
+        build:
+            context: ./api
+        deploy:
+          restart_policy:
+              condition: on-failure
+        ports:
+            - "5000:5000"
+        depends_on:
+            - postgres
+            - airflow-webserver
+        env_file:
+            - .env
+
     postgres:
         image: postgres
+        ports:
+            - "5432:5432"
         environment:
             - POSTGRES_USER=airflow
             - POSTGRES_PASSWORD=airflow
             - POSTGRES_DB=airflow
-    scheduler:
-        image: apache/airflow
+        volumes:
+            - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+    airflow-scheduler:
+        build:
+            context: ./docker/airflow
         command: scheduler
         deploy:
           restart_policy:
@@ -18,21 +54,25 @@ services:
             - .env
         volumes:
             - ./dags:/opt/airflow/dags
+            - ./dbt:/dbt
             - ./logs:/opt/airflow/logs
-    webserver:
-        image: apache/airflow
+
+    airflow-webserver:
+        build:
+            context: ./docker/airflow
         entrypoint: ./scripts/entrypoint.sh
         deploy:
           restart_policy:
               condition: on-failure
         depends_on:
             - postgres
-            - scheduler
+            - airflow-scheduler
         env_file:
             - .env
         volumes:
             - ./dags:/opt/airflow/dags
             - ./logs:/opt/airflow/logs
+            - ./dbt:/dbt
             - ./scripts:/opt/airflow/scripts
         ports:
             - "8080:8080"

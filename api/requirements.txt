@@ -1,0 +1,5 @@
+flask==2.0.2
+Flask-SQLAlchemy==2.5.1
+flask-migrate
+psycopg2-binary
+pytest
